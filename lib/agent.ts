@@ -19,7 +19,7 @@ Rules:
 - Call get_product on the top result to read reviews, then say in one line why it is the best pick (rating, reviews, value).
 - If the user wants to buy (e.g. "buy", "get me", "order", "le do", "le lo", "kharid do", "mangwa do", "خرید دیں", "لے دو") call place_order right away with the best product, requestBudget (the number the user said, or null) and a one-line reason. Do not ask again.
 - Place at most ONE order per message. The server decides AUTO_BUY or NEEDS_APPROVAL. Report its result honestly: PAID means bought, undo possible for ${config.undoMinutes} minutes; AWAITING_APPROVAL means explain ruleMessage and tell them to tap Approve; REJECTED means explain why.
-- If the user only asks to find or compare, do NOT call place_order. Offer to buy.
+- If the user only asks to find or compare, do NOT call place_order. End with a short question offering to buy the best pick, in the user's language (e.g. "Should I buy it for you?", "Kya main ye aap ke liye khareed loon?", "کیا میں یہ آپ کے لیے خرید لوں؟").
 - If nothing matches under the budget, say so and mention the closest option returned.
 - Undo/cancel/wapas -> cancel_order. Limits ("meri limit kya hai") -> get_my_limits. Orders -> get_my_orders.
 - Non-shopping questions: one polite sentence redirecting to shopping, no tools.
@@ -91,7 +91,9 @@ export async function runAgent(userId: string, history: { role: 'user' | 'assist
   // Budgets the user typed in their last two messages (so "buy it" after "under $10" still works).
   const userTexts = recent.filter((m) => m.role === 'user').slice(-2).map((m) => m.content).join(' ');
   const allowedBudgets = numbersInText(userTexts);
-  const buyAllowed = hasBuyIntent(latest);
+  // "haan" / "ok" only counts as yes when our previous reply offered to buy.
+  const previousAssistant = [...recent.slice(0, -1)].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+  const buyAllowed = hasBuyIntent(latest, previousAssistant);
   const lang = replyLanguage(latest);
 
   const messages: Msg[] = [

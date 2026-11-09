@@ -46,11 +46,31 @@ export function numbersInText(text: string): number[] {
 }
 
 // ---------- Buy intent ----------
-// The AI may only place an order when the user's latest message asks to buy (or says yes to an offer).
-const BUY_EN = /\b(buy|order|purchase|checkout|pay|get (it|this|that|me|one)|grab|yes|yeah|yep|sure|ok|okay|confirm|go ahead|do it|approve)\b/i;
-const BUY_ROMAN = /\b(le ?do|le ?lo|lelo|ledo|le ?dein|khareed|kharid|khareedo|kharido|mangwa|mangwao|order kar|kar do|haan|han|ji|jee|theek|thik|bilkul)\b/i;
-const BUY_URDU = /(خرید|لے دو|لے لو|لے دیں|منگوا|آرڈر|ہاں|جی|ٹھیک|بالکل)/;
+// The AI may only place an order when the user's latest message clearly asks to buy,
+// or is a short "yes" reply to a message where the agent offered to buy.
+// Common words like "ji", "ok", "pay", "order" or "kar do" alone are NOT a buy request
+// ("ji mujhe perfume dikhao", "search kar do", "what is my order status").
 
-export function hasBuyIntent(text: string): boolean {
-  return BUY_EN.test(text) || BUY_ROMAN.test(text) || BUY_URDU.test(text);
+// Clear buy requests: count in any message.
+const BUY_EN = /\b(buy|purchase|checkout|check out|order (it|this|that|one|now)|place (an |the )?order|get (it|this|that|one)|grab (it|this|that|one)|go ahead|do it|approve)\b/i;
+const BUY_ROMAN = /\b(le ?do|le ?lo|le ?dein|le ?len|le ?lijiye|khareed\w*|kharid\w*|mangwa\w*|order kar\w*)\b/i;
+const BUY_URDU = /(خرید|لے دو|لے لو|لے دیں|لے لیں|منگوا|آرڈر کر)/;
+
+// Confirmation words: only count as a short reply to an offer.
+const YES_LATIN = /\b(yes|yeah|yep|yup|sure|ok|okay|confirm|confirmed|haan|han|ha|ji|jee|theek|thik|bilkul|zaroor)\b/i;
+const YES_URDU = /(ہاں|جی|ٹھیک|بالکل|ضرور)/;
+
+// "Don't buy", "mat lo", "nahi chahiye", "نہیں" cancel any buy signal.
+const NEGATION = /\b(don'?t|do not|not now|no|nope|nahi|nahin|nai|mat|cancel|wait|ruko)\b|(نہیں|مت|رکو)/i;
+
+// Did the agent's previous message offer to buy something?
+const OFFER = /\b(buy|order|purchase|khareed\w*|kharid\w*|mangwa\w*|le ?l[uo]o?n|le ?doon|lena)\b|(خرید|منگوا|لے لوں|آرڈر)/i;
+
+const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+
+export function hasBuyIntent(text: string, previousAssistant = ''): boolean {
+  if (NEGATION.test(text)) return false;
+  if (BUY_EN.test(text) || BUY_ROMAN.test(text) || BUY_URDU.test(text)) return true;
+  const offered = /[?؟]/.test(previousAssistant) && OFFER.test(previousAssistant); // ؟ is the Urdu question mark
+  return offered && wordCount(text) <= 4 && (YES_LATIN.test(text) || YES_URDU.test(text));
 }

@@ -63,7 +63,7 @@ Ranking is deterministic and explainable: `score = 0.5*(rating/5) + 0.3*(avgRevi
 
 ## Run it locally (about 3 minutes, everything free)
 
-Requirements: Node.js 20 or newer.
+Requirements: Node.js 22 or newer (the tests use Node's built-in TypeScript support).
 
 ```bash
 git clone <this repo>
