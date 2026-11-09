@@ -12,6 +12,7 @@ async function accessToken(): Promise<string> {
     method: 'POST',
     headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'grant_type=client_credentials',
+    signal: AbortSignal.timeout(15_000),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(`PayPal auth failed: ${data.error_description || res.status}`);
@@ -26,9 +27,12 @@ async function pp<T = any>(method: string, path: string, body?: unknown, request
     Prefer: 'return=representation',
   };
   if (requestId) headers['PayPal-Request-Id'] = requestId; // idempotency: no double charges
-  const res = await fetch(`${config.paypalBase}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch(`${config.paypalBase}${path}`, {
+    method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20_000),
+  });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  let data: any = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { message: text.slice(0, 200) }; }
   if (!res.ok) {
     const detail = data?.details?.[0]?.description || data?.message || data?.error_description || res.statusText;
     throw new Error(`PayPal ${method} ${path} failed (${res.status}): ${detail}`);
@@ -97,7 +101,7 @@ export async function chargeVault(u: Unit, vaultId: string): Promise<CaptureResu
   let data = await pp('POST', '/v2/checkout/orders', {
     intent: 'CAPTURE',
     purchase_units: [unitBreakdown(u)],
-    payment_source: { paypal: { vault_id: vaultId, stored_credential: { payment_initiator: 'MERCHANT', usage: 'SUBSEQUENT', usage_pattern: 'IMMEDIATE' } } },
+    payment_source: { paypal: { vault_id: vaultId } },
   }, `create-${u.orderId}`);
   if (data.status !== 'COMPLETED') data = await pp('POST', `/v2/checkout/orders/${data.id}/capture`, {}, `capture-${u.orderId}`);
   const cap = data.purchase_units?.[0]?.payments?.captures?.[0];

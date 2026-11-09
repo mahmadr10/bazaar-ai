@@ -2,10 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatCard, ChatResponse } from '@/lib/contracts';
 import { LimitsPills } from '@/components/Nav';
-import { CardView } from '@/components/Cards';
+import { AgentSteps, CardView } from '@/components/Cards';
 import { api, refreshMe, useMe } from '@/components/useMe';
 
-type Msg = { role: 'user' | 'assistant'; content: string; cards?: ChatCard[]; error?: boolean };
+type Msg = { role: 'user' | 'assistant'; content: string; cards?: ChatCard[]; error?: boolean; trace?: string[]; model?: string };
 
 const SUGGESTIONS = [
   'Under $10 mein best mascara le do',
@@ -47,7 +47,7 @@ export default function ChatPage() {
         messages: next.filter((m) => !m.error).map((m) => ({ role: m.role, content: m.content })),
         context,
       });
-      setMsgs([...next, { role: 'assistant', content: res.reply, cards: res.cards }]);
+      setMsgs([...next, { role: 'assistant', content: res.reply, cards: res.cards, trace: res.trace, model: res.model }]);
       setContext(res.context);
       if (res.cards.some((c) => c.type === 'receipt')) refreshMe();
     } catch (e: any) {
@@ -84,6 +84,7 @@ export default function ChatPage() {
           <div key={i} className={`msg ${m.role === 'user' ? 'user' : 'bot'}`}>
             {m.content && <div className={`bubble ${m.error ? 'err' : ''}`} dir="auto">{m.content}</div>}
             {m.cards?.map((c, j) => <CardView key={j} card={c} />)}
+            {m.trace && <AgentSteps steps={m.trace} model={m.model} />}
           </div>
         ))}
         {busy && (

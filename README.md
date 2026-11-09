@@ -16,11 +16,16 @@ Built for the **PayPal AI Hackathon 2026** (Devpost). Tell the agent what you wa
 ## Safety design (why you can trust an agent with your money)
 
 1. **Prices only come from the database.** `place_order` re-reads the price and re-runs the rules on the server. It never trusts a price or a decision from the LLM.
-2. **The AI cannot invent a budget.** The server only accepts a budget number that the user actually typed in their last messages.
-3. **The user id comes from the signed session cookie**, never from the AI or the request body.
-4. **Idempotency.** Every PayPal create, capture, refund and payout call sends a `PayPal-Request-Id`. Orders are claimed with atomic status updates, so double clicks cannot double charge or double pay.
-5. **Undo window before payout.** Sellers are paid only after the refund window closes.
-6. **The rules engine is unit tested**: 13 tests, one per branch (`npm test`).
+2. **The AI cannot buy unless you asked.** The server checks the user's latest message for buy intent (English, Roman Urdu or Urdu, e.g. "buy", "le lo", "خرید دیں", or "yes/haan" to an offer). Without it, `place_order` is refused, even if the AI tries.
+3. **The AI cannot invent a budget.** The server only accepts a budget number that the user actually typed in their last messages.
+4. **One order per message, one money action per user at a time.** A per-user lock stops two quick requests from both passing the monthly cap.
+5. **The user id comes from the signed session cookie**, never from the AI or the request body.
+6. **Idempotency.** Every PayPal create, capture, refund and payout call sends a `PayPal-Request-Id`. Orders are claimed with atomic status updates, so double clicks cannot double charge or double pay.
+7. **Undo window before payout.** Sellers are paid only after the refund window closes. Stock goes down on purchase and back up on refund.
+8. **Admin only.** The money dashboard and seller payouts are limited to `ADMIN_EMAILS` (and the demo account, so judges can see it).
+9. **Free-tier protection.** Chat and login are rate limited, and every Groq and PayPal call has a timeout.
+10. **Transparent.** Each reply has a "How I did this" list showing the search, the reviews read and the rules engine decision.
+11. **Unit tested:** 22 tests covering every rules engine branch plus the language, budget and buy-intent guards (`npm test`).
 
 ## PayPal APIs used
 
@@ -107,7 +112,7 @@ All payments are PayPal **sandbox** (test money). Never use real credentials.
 | `Under $10 mein best mascara le do` | Roman Urdu reply, auto-buy $9.99, receipt with an undo timer |
 | `مجھے 10 ڈالر سے کم میں نیل پالش خرید دیں` | Urdu script reply, auto-buy $8.99 |
 | `Under $30 achhi shirt chahiye, le lo` | Over the $20 limit, so it shows an Approve button instead of buying |
-| `Find me a good body wash under $15` | Shows options only, asks before buying |
+| `Find me a lipstick under $15`, then `haan, le lo` | First shows options only and asks. The yes reply then places the order |
 | `Meri limit kya hai?` | Shows limits and spend this month |
 | `undo karo` | Refunds the latest order inside the window |
 
@@ -122,7 +127,9 @@ app/
   api/orders/...           list, approve, cancel (undo)
   api/payouts/release      seller payouts
 lib/
-  agent.ts                 LLM tool loop, language detection, budget guard
+  agent.ts                 LLM tool loop with server-side guards and a step trace
+  text.ts                  language, budget and buy-intent detection, search terms (pure, unit tested)
+  guards.ts                rate limiter and per-user lock
   catalog.ts               search and ranking
   rules-core.ts            rules engine (pure, unit tested)
   orders.ts                place, approve, refund, payouts, admin stats, webhooks
@@ -130,7 +137,7 @@ lib/
   db.ts                    Postgres (PGlite or Supabase), auto schema and seed
 db/schema.sql              database schema
 data/catalog.json          194 products from DummyJSON (npm run seed refreshes it)
-tests/rules.test.ts        rules engine tests
+tests/                     rules engine and text guard tests
 ```
 
 ## Tech and cost

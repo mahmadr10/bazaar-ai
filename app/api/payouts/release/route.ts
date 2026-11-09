@@ -1,9 +1,9 @@
-import { handler, requireUser } from '@/lib/auth';
+import { handler, requireAdmin } from '@/lib/auth';
 import { releasePayouts } from '@/lib/orders';
 
-// Pays sellers (PayPal Payouts) for orders past the undo window.
+// Pays sellers (PayPal Payouts) for orders past the undo window. Admin only.
 export const POST = handler(async (req: Request) => {
-  await requireUser();
+  await requireAdmin();
   const body = await req.json().catch(() => ({}));
   return Response.json(await releasePayouts(!!body.includeOpen));
 });

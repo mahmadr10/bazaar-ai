@@ -26,7 +26,7 @@ export default function Nav() {
         <Link href="/" className="brand"><span className="brand-mark">B</span>Bazaar AI</Link>
         {me?.user && (
           <nav className="nav-links">
-            {LINKS.map((l) => (
+            {LINKS.filter((l) => l.href !== '/admin' || me.isAdmin).map((l) => (
               <Link key={l.href} href={l.href} className={path === l.href ? 'active' : ''}>{l.label}</Link>
             ))}
           </nav>

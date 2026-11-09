@@ -17,7 +17,10 @@ export default function AdminPage() {
   const [d, setD] = useState<Admin | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: string; text: string } | null>(null);
-  const load = useCallback(async () => setD(await api<Admin>('/api/admin')), []);
+  const [denied, setDenied] = useState('');
+  const load = useCallback(async () => {
+    try { setD(await api<Admin>('/api/admin')); } catch (e: any) { setDenied(e.message); }
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   async function release(includeOpen: boolean) {
@@ -30,6 +33,7 @@ export default function AdminPage() {
     setBusy(false);
   }
 
+  if (denied) return <div className="page narrow"><div className="alert alert-err">{denied}</div></div>;
   if (!me?.user || !d) return <div className="page muted">Loading...</div>;
   const t = d.totals;
   return (

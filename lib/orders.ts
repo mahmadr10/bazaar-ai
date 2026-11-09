@@ -7,6 +7,7 @@ import { evaluateRules, splitAmount } from './rules-core';
 import * as paypal from './paypal';
 import type { Limits, Receipt, RuleResult } from './contracts';
 import { HttpError } from './auth';
+import { withUserLock } from './guards';
 
 type OrderRow = Record<string, any>;
 
@@ -77,11 +78,16 @@ async function markPaid(orderId: string, cap: paypal.CaptureResult) {
     `update orders set status = 'PAID', paypal_order_id = $2, paypal_capture_id = $3, tracking_number = $4,
        undo_until = now() + ($5 || ' minutes')::interval, error = null where id = $1`,
     [orderId, cap.paypalOrderId, cap.captureId, tracking, String(config.undoMinutes)]);
+  await query('update products set stock = greatest(stock - 1, 0) where id = (select product_id from orders where id = $1)', [orderId]);
   await logEvent('ORDER_PAID', paypalSimulated() ? 'simulated' : 'paypal', orderId, cap);
   paypal.addTracking(cap.paypalOrderId, cap.captureId, tracking).catch(() => {});
 }
 
-export async function placeOrder(userId: string, productId: number, requestBudget: number | null, agentReason: string): Promise<Receipt> {
+export function placeOrder(userId: string, productId: number, requestBudget: number | null, agentReason: string): Promise<Receipt> {
+  return withUserLock(userId, () => placeOrderLocked(userId, productId, requestBudget, agentReason));
+}
+
+async function placeOrderLocked(userId: string, productId: number, requestBudget: number | null, agentReason: string): Promise<Receipt> {
   const rule = await checkPurchaseRules(userId, productId, requestBudget);
   const product = await one<OrderRow>('select id, title, thumbnail, price from products where id = $1', [productId]);
   if (rule.decision === 'REJECT' || !product) {
@@ -115,7 +121,11 @@ export async function placeOrder(userId: string, productId: number, requestBudge
 }
 
 // One-tap approval for AWAITING_APPROVAL orders. The user clicked Approve, which is explicit consent.
-export async function approveOrder(userId: string, orderId: string): Promise<{ receipt?: Receipt; redirect?: string }> {
+export function approveOrder(userId: string, orderId: string): Promise<{ receipt?: Receipt; redirect?: string }> {
+  return withUserLock(userId, () => approveOrderLocked(userId, orderId));
+}
+
+async function approveOrderLocked(userId: string, orderId: string): Promise<{ receipt?: Receipt; redirect?: string }> {
   const claimed = await one<OrderRow>(
     `update orders set status = 'PROCESSING' where id = $1 and user_id = $2 and status = 'AWAITING_APPROVAL' returning *`, [orderId, userId]);
   if (!claimed) throw new HttpError(409, 'This order is not waiting for approval (it may already be paid or cancelled).');
@@ -179,6 +189,7 @@ export async function cancelOrder(userId: string, orderId?: string | null): Prom
   try {
     const r = await paypal.refundCapture(o.paypal_capture_id, o.id);
     await query(`update orders set status = 'REFUNDED', refund_id = $2, undo_until = null where id = $1`, [o.id, r.refundId]);
+    await query('update products set stock = stock + 1 where id = $1', [o.product_id]);
     await logEvent('ORDER_REFUNDED', paypalSimulated() ? 'simulated' : 'paypal', o.id, r);
   } catch (err: any) {
     await query(`update orders set status = 'PAID', error = $2 where id = $1`, [o.id, err.message]);

@@ -62,21 +62,25 @@ async function seedIfEmpty(r: Runner) {
     sellerIds.push(rows[0].id);
   }
 
-  const catalog = JSON.parse(await readFile(path.join(process.cwd(), 'data', 'catalog.json'), 'utf8'));
-  for (const [i, p] of catalog.entries()) {
-    await r.query(
-      `insert into products (id, title, description, category, brand, price, rating, stock, thumbnail, images, tags, seller_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) on conflict (id) do nothing`,
-      [p.id, p.title, p.description, p.category, p.brand, p.price, p.rating, p.stock, p.thumbnail,
-       JSON.stringify(p.images), p.tags, sellerIds[i % sellerIds.length]],
-    );
-    for (const rv of p.reviews) {
-      await r.query(
-        'insert into reviews (product_id, rating, comment, reviewer_name, created_at) values ($1,$2,$3,$4,$5)',
-        [p.id, rv.rating, rv.comment, rv.reviewer_name, rv.created_at],
-      );
-    }
-  }
+  // Two bulk inserts instead of hundreds of round trips (fast on Supabase and Vercel too).
+  const catalog: any[] = JSON.parse(await readFile(path.join(process.cwd(), 'data', 'catalog.json'), 'utf8'));
+  const products = catalog.map((p, i) => ({ ...p, reviews: undefined, seller_id: sellerIds[i % sellerIds.length] }));
+  await r.query(
+    `insert into products (id, title, description, category, brand, price, rating, stock, thumbnail, images, tags, seller_id)
+     select x.id, x.title, x.description, x.category, x.brand, x.price, x.rating, x.stock, x.thumbnail, x.images,
+            array(select jsonb_array_elements_text(x.tags)), x.seller_id
+     from jsonb_to_recordset($1::jsonb) as x(id int, title text, description text, category text, brand text, price numeric,
+          rating numeric, stock int, thumbnail text, images jsonb, tags jsonb, seller_id int)
+     on conflict (id) do nothing`,
+    [JSON.stringify(products)],
+  );
+  const reviews = catalog.flatMap((p) => p.reviews.map((rv: any) => ({ product_id: p.id, ...rv })));
+  await r.query(
+    `insert into reviews (product_id, rating, comment, reviewer_name, created_at)
+     select x.product_id, x.rating, x.comment, x.reviewer_name, x.created_at
+     from jsonb_to_recordset($1::jsonb) as x(product_id int, rating int, comment text, reviewer_name text, created_at timestamptz)`,
+    [JSON.stringify(reviews)],
+  );
 
   // Demo account so judges can try it without signing up.
   const { rows: u } = await r.query(

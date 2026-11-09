@@ -23,7 +23,7 @@ export function ProductCards({ products, bestId, note }: { products: ProductCard
               <div className="price">{usd(p.price)}</div>
               <Stars value={p.rating} />
               <div className="tiny muted">
-                {p.reviewCount ? `${p.reviewCount} reviews, avg ${p.avgReview?.toFixed(1)}` : 'No reviews'} . {p.stock} in stock
+                {p.reviewCount ? `${p.reviewCount} reviews, avg ${p.avgReview?.toFixed(1)}` : 'No reviews'} | {p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}
               </div>
             </div>
           </div>
@@ -142,6 +142,18 @@ export function OrdersMini({ orders }: { orders: Receipt[] }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// Shows what the agent actually did, so users and judges can see the AI did not decide the payment.
+export function AgentSteps({ steps, model }: { steps: string[]; model?: string }) {
+  if (!steps.length) return null;
+  return (
+    <details className="steps">
+      <summary>How I did this ({steps.length} step{steps.length === 1 ? '' : 's'})</summary>
+      <ol>{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+      {model && <div className="tiny muted">Model: {model}. Prices and payment decisions come from code, not the AI.</div>}
+    </details>
   );
 }
 

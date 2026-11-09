@@ -1,8 +1,10 @@
 import { handler, createSession, HttpError } from '@/lib/auth';
 import { hashPassword } from '@/lib/auth-crypto';
 import { one, query } from '@/lib/db';
+import { rateLimit, clientIp } from '@/lib/guards';
 
 export const POST = handler(async (req: Request) => {
+  if (!rateLimit(`signup:${clientIp(req)}`, 5, 10 * 60_000)) throw new HttpError(429, 'Too many sign-ups from this network. Please wait a few minutes.');
   const { email, password, name } = await req.json();
   const e = String(email ?? '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new HttpError(400, 'Please enter a valid email.');

@@ -14,10 +14,25 @@ export const config = {
 
   sellerEmails: (e.SELLER_EMAILS || '').split(',').map((s) => s.trim()).filter(Boolean),
   databaseUrl: e.DATABASE_URL || '',
-  sessionSecret: e.SESSION_SECRET || 'dev-only-secret-change-me',
+  get sessionSecret(): string {
+    const s = e.SESSION_SECRET;
+    if (s && s.length >= 16) return s;
+    if (e.NODE_ENV === 'production') throw new Error('SESSION_SECRET must be set (16+ characters) in production.');
+    return 'dev-only-secret-change-me';
+  },
   platformFeeRate: Number(e.PLATFORM_FEE_RATE || '0.10'),
   undoMinutes: Number(e.UNDO_WINDOW_MINUTES || '10'),
-  appUrl: (e.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, ''),
+  // Used for PayPal return links. On Vercel it falls back to the project URL if not set.
+  appUrl: (e.NEXT_PUBLIC_APP_URL
+    || (e.VERCEL_PROJECT_PRODUCTION_URL ? `https://${e.VERCEL_PROJECT_PRODUCTION_URL}` : '')
+    || (e.VERCEL_URL ? `https://${e.VERCEL_URL}` : '')
+    || 'http://localhost:3000').replace(/\/$/, ''),
+  // Who can open the Admin page and release payouts. The demo account is admin so judges can see it.
+  adminEmails: (e.ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+
+  // Free-tier protection: messages per user per minute, and login attempts per IP per 10 minutes.
+  chatPerMinute: Number(e.CHAT_PER_MINUTE || '12'),
+  loginAttempts: Number(e.LOGIN_ATTEMPTS || '10'),
 
   demoEmail: 'demo@bazaar.test',
   demoPassword: 'bazaar-demo-2026',

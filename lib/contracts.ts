@@ -41,4 +41,5 @@ export type ChatCard =
   | { type: 'limits'; limits: Limits }
   | { type: 'orders'; orders: Receipt[] };
 
-export type ChatResponse = { reply: string; cards: ChatCard[]; context: string; model?: string };
+// trace: plain-language steps the agent took (search, reviews, rules engine), shown under the reply.
+export type ChatResponse = { reply: string; cards: ChatCard[]; context: string; model?: string; trace?: string[] };

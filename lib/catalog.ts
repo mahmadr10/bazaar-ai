@@ -1,6 +1,7 @@
 // Catalog search and ranking. Prices, ratings and stock always come from the database.
 import { query, one, num } from './db';
 import type { ProductCard, ProductDetails } from './contracts';
+import { searchTerms, valueScore } from './text';
 
 export const CATEGORIES = [
   'beauty', 'fragrances', 'furniture', 'groceries', 'home-decoration', 'kitchen-accessories', 'laptops',
@@ -9,25 +10,7 @@ export const CATEGORIES = [
   'womens-jewellery', 'womens-shoes', 'womens-watches',
 ];
 
-const SYNONYMS: Record<string, string[]> = {
-  perfume: ['fragrance', 'eau'], cologne: ['fragrance', 'eau'], scent: ['fragrance'], attar: ['fragrance'],
-  phone: ['smartphone', 'phone'], mobile: ['smartphone', 'phone'], makeup: ['beauty'], cosmetic: ['beauty'],
-  sneaker: ['shoe'], trainer: ['shoe'], bag: ['bag', 'handbag'], purse: ['bag'], laptop: ['laptop'],
-  shade: ['sunglasses'], glasses: ['sunglasses'], soap: ['soap', 'wash'], cream: ['cream', 'lotion', 'moisture'],
-};
-const STOP = new Set(['a', 'an', 'the', 'for', 'me', 'my', 'best', 'good', 'cheap', 'under', 'below', 'with', 'and', 'or', 'of', 'some', 'nice', 'buy', 'find']);
-
-function terms(keywords: string): string[] {
-  const words = keywords.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/[\s-]+/).filter((w) => w.length > 1 && !STOP.has(w));
-  const out = new Set<string>();
-  for (let w of words) {
-    if (w.length > 4 && w.endsWith('es') && !w.endsWith('sses')) w = w.slice(0, -2);
-    else if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1);
-    out.add(w);
-    for (const s of SYNONYMS[w] ?? []) out.add(s);
-  }
-  return [...out].slice(0, 8);
-}
+const terms = searchTerms;
 
 type Row = { id: number; title: string; price: string; rating: string; category: string; thumbnail: string; stock: number; avg_review: string | null; review_count: number; rel: number };
 
@@ -36,14 +19,6 @@ const toCard = (r: Row, score?: number): ProductCard => ({
   thumbnail: r.thumbnail, stock: r.stock, avgReview: Math.round(num(r.avg_review) * 100) / 100,
   reviewCount: r.review_count, score: score === undefined ? undefined : Math.round(score * 1000) / 1000,
 });
-
-// Deterministic, explainable score from the project plan:
-// 0.5 * rating/5 + 0.3 * avgReview/5 + 0.2 * (1 - price/budget)   (last term only with a budget)
-export function valueScore(p: { rating: number; avgReview: number; price: number }, budget?: number | null): number {
-  const base = 0.5 * (p.rating / 5) + 0.3 * (p.avgReview / 5);
-  if (!budget || budget <= 0) return base / 0.8;
-  return base + 0.2 * Math.max(0, 1 - p.price / budget);
-}
 
 export async function searchProducts(q: {
   keywords: string; category?: string; maxPrice?: number | null; minRating?: number; limit?: number;

@@ -36,6 +36,18 @@ export async function requireUser(): Promise<SessionUser> {
   return u;
 }
 
+export function isAdmin(email: string): boolean {
+  const e = email.toLowerCase();
+  return e === config.demoEmail || config.adminEmails.includes(e);
+}
+
+// Admin page and payouts: only admins (ADMIN_EMAILS, plus the demo account for judges).
+export async function requireAdmin(): Promise<SessionUser> {
+  const u = await requireUser();
+  if (!isAdmin(u.email)) throw new HttpError(403, 'Only platform admins can see this page.');
+  return u;
+}
+
 // Wraps a route handler so errors become clean JSON responses.
 export function handler<A extends unknown[]>(fn: (...args: A) => Promise<Response>) {
   return async (...args: A): Promise<Response> => {
