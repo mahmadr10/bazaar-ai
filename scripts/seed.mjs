@@ -29,6 +29,20 @@ const catalog = products.map((p) => ({
   })),
 }));
 
+// Save each thumbnail inside the app (public/products) so pictures never depend on an outside server.
+await mkdir(path.join(process.cwd(), 'public', 'products'), { recursive: true });
+const queue = [...catalog];
+await Promise.all(Array.from({ length: 8 }, async () => {
+  while (queue.length) {
+    const p = queue.shift();
+    const ext = (new URL(p.thumbnail).pathname.match(/\.(webp|png|jpg|jpeg)$/i)?.[1] || 'webp').toLowerCase();
+    const r = await fetch(p.thumbnail);
+    if (!r.ok) throw new Error(`Thumbnail ${p.id} returned ${r.status}`);
+    await writeFile(path.join(process.cwd(), 'public', 'products', `${p.id}.${ext}`), Buffer.from(await r.arrayBuffer()));
+    p.thumbnail = `/products/${p.id}.${ext}`;
+  }
+}));
+
 const out = path.join(process.cwd(), 'data', 'catalog.json');
 await mkdir(path.dirname(out), { recursive: true });
 await writeFile(out, JSON.stringify(catalog));
