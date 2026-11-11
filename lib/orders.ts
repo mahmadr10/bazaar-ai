@@ -224,7 +224,7 @@ export async function releasePayouts(includeOpen = false) {
       const itemId = res.items.find((x) => x.orderId === it.orderId)?.itemId ?? null;
       await query(`update orders set status = 'PAID_OUT', payout_batch_id = $2, payout_item_id = $3, undo_until = null where id = $1`, [it.orderId, res.batchId, itemId]);
     }
-    await logEvent('PAYOUTS_SENT', paypalSimulated() ? 'simulated' : config.useSdk ? 'paypal-sdk' : 'paypal', null, { batchId: res.batchId, status: res.status, count: items.length, total: items.reduce((a, b) => a + b.amount, 0) });
+    await logEvent('PAYOUTS_SENT', paypalSimulated() ? 'simulated' : 'paypal', null, { batchId: res.batchId, status: res.status, count: items.length, total: items.reduce((a, b) => a + b.amount, 0) });
     return { released: items.length, batchId: res.batchId };
   } catch (err: any) {
     await query(`update orders set status = 'PAID' where id = any($1::uuid[]) and status = 'PROCESSING'`, [[...claimedIds]]);
