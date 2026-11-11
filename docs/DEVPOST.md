@@ -19,6 +19,9 @@ You tell Bazaar AI what you want and your budget, in English, Urdu or Roman Urdu
 - PayPal REST APIs in the sandbox: OAuth, Vault v3 (setup tokens and payment tokens), Orders v2 (vaulted charge and checkout with capture), Refunds, Payouts, order tracking, and webhooks with signature verification.
 - PostgreSQL (Supabase, or embedded PGlite for local development) seeded with 194 products and reviews from DummyJSON.
 
+## APIMatic Context Plugin
+We installed the APIMatic Context Plugin for PayPal and followed its TypeScript skills to integrate the PayPal Server SDK (`@paypal/paypal-server-sdk`, pinned to 2.5.0) for Orders (create and capture) and Payments (refunds for the 10-minute Undo). It sits behind a switch next to our direct REST client, and the Admin event log shows `paypal-sdk` when it runs. Payouts, webhook verification and Vault stay on REST because the SDK does not cover them. The skill files were used as reference by our AI coding assistant, and the app does not call the plugin at runtime.
+
 ## Challenges we ran into
 - Making "the agent buys without asking" safe. We solved it with a one-time mandate and a rules engine that re-reads prices from the database on every order. The AI never decides payment.
 - Stopping the AI from inventing a budget to trigger auto-buy: the server only accepts budget numbers the user actually typed.
@@ -35,7 +38,7 @@ Agentic commerce needs guardrails in code, not in prompts. PayPal's Vault, Order
 Real local sellers and catalogs, voice input in Urdu, price drop watching ("buy when under $8"), and PayPal Agent Toolkit integration.
 
 ## Built with
-nextjs, typescript, react, paypal, paypal-vault, paypal-orders, paypal-payouts, groq, llm, postgresql, supabase, pglite, vercel
+nextjs, typescript, react, paypal, apimatic, paypal-server-sdk, paypal-vault, paypal-orders, paypal-payouts, groq, llm, postgresql, supabase, pglite, vercel
 
 ## Team roles
 - **AI Agent and Experience Lead:** built the multilingual shopping agent, product search and ranking, prompt guardrails, and the chat UI with product, receipt, approval and undo cards. Produced the demo video.

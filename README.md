@@ -31,7 +31,7 @@ Built for the **PayPal AI Hackathon 2026** (Devpost). Tell the agent what you wa
 
 | API | Where | Purpose |
 |---|---|---|
-| OAuth 2.0 client credentials | `lib/paypal.ts` | Access token, cached until expiry |
+| OAuth 2.0 client credentials | `lib/paypal.ts`, `lib/paypal-sdk.ts` | Access token, cached until expiry (SDK handles it on the SDK path) |
 | Vault v3 setup tokens and payment tokens | `/api/paypal/vault/setup`, `/api/paypal/vault/return` | Save the buyer's PayPal once |
 | Orders v2 with `vault_id` | `lib/orders.ts` `placeOrder` | Agent auto-buy with no redirect |
 | Orders v2 checkout plus capture | `/api/orders/approve`, `/api/paypal/order/return` | One-tap approval for over-limit orders |
@@ -39,6 +39,16 @@ Built for the **PayPal AI Hackathon 2026** (Devpost). Tell the agent what you wa
 | Payouts v1 | `/api/payouts/release` | Pay sellers their share minus commission |
 | Order tracking | `lib/paypal.ts` `addTracking` | Send the tracking number to PayPal |
 | Webhooks plus signature verification | `/api/paypal/webhook` | Capture, refund and payout events |
+
+## APIMatic Context Plugin for PayPal
+
+The PayPal Server SDK path in `lib/paypal-sdk.ts` was built with the **APIMatic Context Plugin for PayPal** as the reference.
+
+- Installed with `npx context-plugins install https://github.com/paypaldev/server-sdk-context-plugin-preview` (it adds TypeScript skills for the PayPal Server SDK).
+- Followed the plugin's TypeScript skills: install the exact pinned SDK (`@paypal/paypal-server-sdk@2.5.0`), build one `Client` with OAuth client credentials, create `OrdersController` and `PaymentsController` yourself, and confirm every method and model name against the SDK source before writing code.
+- Used for **Orders** (create and capture a checkout) and **Payments** (refund for Undo). It is switched on with `USE_PAYPAL_SDK=true`. Admin event log entries show `paypal-sdk` when this path runs.
+- Vault, Payouts, order tracking and webhook verification stay on direct REST calls (`lib/paypal.ts`), because the SDK does not cover Payouts or webhook verification.
+- Honest note: the plugin skills were read as reference by the AI assistant that helped write the code. The app itself does not call the plugin at runtime.
 
 ## Architecture
 

@@ -22,6 +22,8 @@ export const config = {
   },
   // Saving PayPal for auto-buy needs PayPal Vault enabled on the sandbox app. Off by default.
   vaultEnabled: e.VAULT_ENABLED === 'true',
+  // Use the PayPal Server SDK (instead of raw REST calls) for Orders and Refunds. See lib/paypal-sdk.ts.
+  useSdk: e.USE_PAYPAL_SDK === 'true',
   platformFeeRate: Number(e.PLATFORM_FEE_RATE || '0.10'),
   undoMinutes: Number(e.UNDO_WINDOW_MINUTES || '10'),
   // Used for PayPal return links. On Vercel it falls back to the project URL if not set.

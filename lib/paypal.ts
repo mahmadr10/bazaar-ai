@@ -2,6 +2,7 @@
 // If no sandbox credentials are set, every call is simulated locally so the app still works end to end.
 import { randomUUID } from 'node:crypto';
 import { config, paypalSimulated } from './env';
+import { sdkCapture, sdkChargeVault, sdkCreateCheckout, sdkRefund } from './paypal-sdk';
 
 let cachedToken: { value: string; exp: number } | null = null;
 
@@ -98,6 +99,7 @@ export type CaptureResult = { paypalOrderId: string; captureId: string; status: 
 // Agent auto-buy: charge the saved PayPal (vault id), no buyer redirect.
 export async function chargeVault(u: Unit, vaultId: string): Promise<CaptureResult> {
   if (paypalSimulated()) return { paypalOrderId: fakeId('SIM-ORDER'), captureId: fakeId('SIM-CAPTURE'), status: 'COMPLETED' };
+  if (config.useSdk) return sdkChargeVault(u, vaultId);
   let data = await pp('POST', '/v2/checkout/orders', {
     intent: 'CAPTURE',
     purchase_units: [unitBreakdown(u)],
@@ -117,6 +119,7 @@ export async function createCheckoutOrder(u: Unit): Promise<{ paypalOrderId: str
     const id = fakeId('SIM-ORDER');
     return { paypalOrderId: id, approveUrl: `${config.appUrl}/simulated-checkout?kind=order&amount=${u.amount.toFixed(2)}&title=${encodeURIComponent(u.title)}&token=${id}&return=${encodeURIComponent(`${returnUrl}&token=${id}`)}&cancel=${encodeURIComponent(cancelUrl)}` };
   }
+  if (config.useSdk) return sdkCreateCheckout(u, returnUrl, cancelUrl);
   const data = await pp('POST', '/v2/checkout/orders', {
     intent: 'CAPTURE',
     purchase_units: [unitBreakdown(u)],
@@ -131,6 +134,7 @@ export async function createCheckoutOrder(u: Unit): Promise<{ paypalOrderId: str
 
 export async function captureOrder(paypalOrderId: string, orderId: string): Promise<CaptureResult> {
   if (paypalSimulated()) return { paypalOrderId, captureId: fakeId('SIM-CAPTURE'), status: 'COMPLETED' };
+  if (config.useSdk) return sdkCapture(paypalOrderId, orderId);
   const data = await pp('POST', `/v2/checkout/orders/${paypalOrderId}/capture`, {}, `capture-${orderId}`);
   const cap = data.purchase_units?.[0]?.payments?.captures?.[0];
   if (!cap) throw new Error(`Capture failed for PayPal order ${paypalOrderId}.`);
@@ -140,6 +144,7 @@ export async function captureOrder(paypalOrderId: string, orderId: string): Prom
 // ---------- Refunds (undo) ----------
 export async function refundCapture(captureId: string, orderId: string): Promise<{ refundId: string; status: string }> {
   if (paypalSimulated()) return { refundId: fakeId('SIM-REFUND'), status: 'COMPLETED' };
+  if (config.useSdk) return sdkRefund(captureId, orderId);
   const data = await pp('POST', `/v2/payments/captures/${captureId}/refund`, { note_to_payer: 'Bazaar AI undo: full refund' }, `refund-${orderId}`);
   return { refundId: data.id, status: data.status };
 }

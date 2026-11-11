@@ -79,7 +79,7 @@ async function markPaid(orderId: string, cap: paypal.CaptureResult) {
        undo_until = now() + ($5 || ' minutes')::interval, error = null where id = $1`,
     [orderId, cap.paypalOrderId, cap.captureId, tracking, String(config.undoMinutes)]);
   await query('update products set stock = greatest(stock - 1, 0) where id = (select product_id from orders where id = $1)', [orderId]);
-  await logEvent('ORDER_PAID', paypalSimulated() ? 'simulated' : 'paypal', orderId, cap);
+  await logEvent('ORDER_PAID', paypalSimulated() ? 'simulated' : config.useSdk ? 'paypal-sdk' : 'paypal', orderId, cap);
   paypal.addTracking(cap.paypalOrderId, cap.captureId, tracking).catch(() => {});
 }
 
@@ -190,7 +190,7 @@ export async function cancelOrder(userId: string, orderId?: string | null): Prom
     const r = await paypal.refundCapture(o.paypal_capture_id, o.id);
     await query(`update orders set status = 'REFUNDED', refund_id = $2, undo_until = null where id = $1`, [o.id, r.refundId]);
     await query('update products set stock = stock + 1 where id = $1', [o.product_id]);
-    await logEvent('ORDER_REFUNDED', paypalSimulated() ? 'simulated' : 'paypal', o.id, r);
+    await logEvent('ORDER_REFUNDED', paypalSimulated() ? 'simulated' : config.useSdk ? 'paypal-sdk' : 'paypal', o.id, r);
   } catch (err: any) {
     await query(`update orders set status = 'PAID', error = $2 where id = $1`, [o.id, err.message]);
     throw new HttpError(502, err.message);
@@ -224,7 +224,7 @@ export async function releasePayouts(includeOpen = false) {
       const itemId = res.items.find((x) => x.orderId === it.orderId)?.itemId ?? null;
       await query(`update orders set status = 'PAID_OUT', payout_batch_id = $2, payout_item_id = $3, undo_until = null where id = $1`, [it.orderId, res.batchId, itemId]);
     }
-    await logEvent('PAYOUTS_SENT', paypalSimulated() ? 'simulated' : 'paypal', null, { batchId: res.batchId, status: res.status, count: items.length, total: items.reduce((a, b) => a + b.amount, 0) });
+    await logEvent('PAYOUTS_SENT', paypalSimulated() ? 'simulated' : config.useSdk ? 'paypal-sdk' : 'paypal', null, { batchId: res.batchId, status: res.status, count: items.length, total: items.reduce((a, b) => a + b.amount, 0) });
     return { released: items.length, batchId: res.batchId };
   } catch (err: any) {
     await query(`update orders set status = 'PAID' where id = any($1::uuid[]) and status = 'PROCESSING'`, [[...claimedIds]]);
