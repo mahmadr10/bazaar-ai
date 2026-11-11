@@ -1,6 +1,6 @@
 # Demo video script (under 3 minutes)
 
-Record the screen at 1080p. No copyrighted music. Upload to YouTube as Public or Unlisted, then paste the link on Devpost.
+Record the screen at 1080p. No copyrighted music. Upload to YouTube as **Public** (the rules require it to be publicly visible), then paste the link on Devpost.
 
 | Time | Screen | What to say |
 |---|---|---|
