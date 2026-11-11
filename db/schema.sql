@@ -85,3 +85,13 @@ create table if not exists events (
   payload jsonb,
   created_at timestamptz default now()
 );
+
+-- Security: Supabase exposes tables through a public data API. Turning on row level security with no
+-- policies blocks that API completely. The app connects directly as the database owner, which bypasses it.
+alter table users enable row level security;
+alter table sellers enable row level security;
+alter table products enable row level security;
+alter table reviews enable row level security;
+alter table mandates enable row level security;
+alter table orders enable row level security;
+alter table events enable row level security;
