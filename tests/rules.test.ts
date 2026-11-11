@@ -19,8 +19,8 @@ test('out of stock is rejected', () => {
   assert.equal(r.rule, 'OUT_OF_STOCK');
 });
 test('PayPal not linked needs approval', () =>
-  assert.equal(run({ mandate: { ...mandate, paypalLinked: false } }).rule, 'PAYPAL_NOT_LINKED'));
-test('no mandate needs approval', () => assert.equal(run({ mandate: null }).rule, 'PAYPAL_NOT_LINKED'));
+  assert.equal(run({ mandate: { ...mandate, paypalLinked: false } }).rule, 'ONE_TAP_APPROVAL'));
+test('no mandate needs approval', () => assert.equal(run({ mandate: null }).rule, 'ONE_TAP_APPROVAL'));
 test('price above per-order limit needs approval', () => {
   const r = run({ product: { price: 25, stock: 3 }, requestBudget: 30 });
   assert.equal(r.decision, 'NEEDS_APPROVAL');

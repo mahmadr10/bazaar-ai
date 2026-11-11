@@ -10,7 +10,7 @@ An AI shopping agent that finds the best product within your budget and pays for
 Shopping online still means scrolling, comparing and filling forms, and most apps assume you speak English. We wanted an agent you can simply tell "Under $10 mein best mascara le do" and trust with your money.
 
 ## What it does
-You tell Bazaar AI what you want and your budget, in English, Urdu or Roman Urdu. The agent searches the store, reads reviews, and picks the best value. If the purchase fits the spending limits you set once (per-order limit, monthly cap), it pays automatically with your saved PayPal. If not, it shows an Approve button. Every auto-purchase comes with a receipt and a 10-minute undo with a full refund. The platform keeps a commission and pays sellers the rest with PayPal Payouts after the undo window.
+You tell Bazaar AI what you want and your budget, in English, Urdu or Roman Urdu. The agent searches the store, reads reviews, and picks the best value. The server checks the price and your spending limits (per-order limit, monthly cap), then shows an Approve button and the buyer pays through PayPal checkout. A saved-PayPal auto-buy mode (PayPal Vault) is built and switches on when Vault is enabled on the sandbox app. Every purchase comes with a receipt and a 10-minute undo with a full refund. The platform keeps a commission and pays sellers the rest with PayPal Payouts after the undo window.
 
 ## How we built it
 - Next.js 16 (App Router) for the frontend and API routes.

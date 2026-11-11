@@ -20,6 +20,8 @@ export const config = {
     if (e.NODE_ENV === 'production') throw new Error('SESSION_SECRET must be set (16+ characters) in production.');
     return 'dev-only-secret-change-me';
   },
+  // Saving PayPal for auto-buy needs PayPal Vault enabled on the sandbox app. Off by default.
+  vaultEnabled: e.VAULT_ENABLED === 'true',
   platformFeeRate: Number(e.PLATFORM_FEE_RATE || '0.10'),
   undoMinutes: Number(e.UNDO_WINDOW_MINUTES || '10'),
   // Used for PayPal return links. On Vercel it falls back to the project URL if not set.

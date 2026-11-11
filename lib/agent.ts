@@ -23,7 +23,7 @@ Rules:
 - If nothing matches under the budget, say so and mention the closest option returned.
 - Undo/cancel/wapas -> cancel_order. Limits ("meri limit kya hai") -> get_my_limits. Orders -> get_my_orders.
 - Non-shopping questions: one polite sentence redirecting to shopping, no tools.
-- Never ask for card numbers or passwords. Payment is only through the user's linked PayPal.`;
+- Never ask for card numbers or passwords. Payment is only through PayPal checkout. Never tell the user to link PayPal; when approval is needed just say they should tap Approve.`;
 
 const tools = [
   fn('search_products', 'Search the store catalog. Returns products ranked by value (rating, reviews, price vs budget).', {
@@ -36,7 +36,7 @@ const tools = [
   fn('check_purchase_rules', 'Check whether the server would auto-buy or ask for approval. Does not buy.', {
     productId: { type: 'integer' }, requestBudget: { type: ['number', 'null'] },
   }, ['productId']),
-  fn('place_order', 'Buy a product for the user with their linked PayPal. The server enforces limits and may require approval.', {
+  fn('place_order', 'Buy a product for the user through PayPal. The server enforces limits and usually asks for a one-tap approval.', {
     productId: { type: 'integer' }, requestBudget: { type: ['number', 'null'], description: 'Budget the user said, or null' },
     reason: { type: 'string', description: 'One line: why this product is the best pick' },
   }, ['productId', 'reason']),

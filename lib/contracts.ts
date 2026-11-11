@@ -16,7 +16,7 @@ export type Decision = 'AUTO_BUY' | 'NEEDS_APPROVAL' | 'REJECT';
 export type RuleResult = {
   decision: Decision;
   // AUTO_BUY_WITHIN_LIMIT, OVER_PER_ORDER_LIMIT, OVER_MONTHLY_LIMIT, NO_BUDGET,
-  // OVER_REQUEST_BUDGET, BUDGET_OVER_LIMIT, AUTO_BUY_OFF, OUT_OF_STOCK, PAYPAL_NOT_LINKED, NOT_FOUND
+  // OVER_REQUEST_BUDGET, BUDGET_OVER_LIMIT, AUTO_BUY_OFF, OUT_OF_STOCK, ONE_TAP_APPROVAL, NOT_FOUND
   rule: string;
   message: string;
 };
@@ -31,7 +31,7 @@ export type Receipt = {
 
 export type Limits = {
   perOrder: number; monthly: number; spentThisMonth: number;
-  autoBuy: boolean; paypalLinked: boolean; paypalEmail?: string | null; simulated: boolean;
+  autoBuy: boolean; paypalLinked: boolean; paypalEmail?: string | null; simulated: boolean; vaultEnabled: boolean;
 };
 
 // What the chat API sends back to the UI: text plus cards built from tool results.

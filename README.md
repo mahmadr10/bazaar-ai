@@ -2,13 +2,13 @@
 
 An AI shopping agent that finds the best product within your budget and pays for it safely with PayPal.
 
-Built for the **PayPal AI Hackathon 2026** (Devpost). Tell the agent what you want in English, Urdu or Roman Urdu ("Under $10 mein best mascara le do"). It searches the store, reads the reviews, picks the best value, and pays with your saved PayPal, but only inside the spending limits you set. A plain-code rules engine, not the AI, makes the payment decision.
+Built for the **PayPal AI Hackathon 2026** (Devpost). Tell the agent what you want in English, Urdu or Roman Urdu ("Under $10 mein best mascara le do"). It searches the store, reads the reviews, picks the best value, and you approve with one tap and pay through PayPal checkout. The price and your spending limits are checked by a plain-code rules engine, not the AI. (A saved-PayPal auto-buy mode using PayPal Vault is built and turns on with `VAULT_ENABLED=true` once Vault is enabled on the sandbox app.)
 
 ## What it does
 
 - **Multilingual shopping agent.** One LLM (Groq, free tier) with 7 tools. It replies in the same language and script as the user.
 - **Save PayPal once (Vault v3).** The user links PayPal one time and sets a mandate: a per-order limit, a monthly cap, and auto-buy on or off.
-- **Rules engine decides money.** Auto-buy happens only if the price fits the request budget, the budget is within the per-order limit, the monthly cap is not crossed, auto-buy is on and PayPal is linked. Anything else gets a one-tap **Approve** button.
+- **Rules engine decides money.** Auto-buy happens only if the price fits the request budget, the budget is within the per-order limit, the monthly cap is not crossed, and auto-buy is on (needs PayPal Vault, off by default here). Otherwise every order gets a one-tap **Approve** button.
 - **Receipts with a 10-minute undo.** Each auto-purchase can be undone with a full PayPal refund.
 - **Marketplace money flow.** The platform keeps a 10% commission, and sellers are paid the rest with **PayPal Payouts** after the undo window closes.
 - **Webhooks and audit log.** PayPal webhook signatures are verified, order status is updated, and every event is logged on the Admin page.

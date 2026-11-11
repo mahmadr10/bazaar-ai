@@ -44,7 +44,7 @@ export async function getMyLimits(userId: string): Promise<Limits> {
   return {
     perOrder: num(m?.per_order_limit ?? 20), monthly: num(m?.monthly_limit ?? 50),
     spentThisMonth: await spentThisMonth(userId), autoBuy: m?.auto_buy_enabled ?? true,
-    paypalLinked: !!m?.paypal_vault_id, paypalEmail: m?.paypal_email ?? null, simulated: paypalSimulated(),
+    paypalLinked: !!m?.paypal_vault_id, paypalEmail: m?.paypal_email ?? null, simulated: paypalSimulated(), vaultEnabled: config.vaultEnabled,
   };
 }
 

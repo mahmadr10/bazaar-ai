@@ -50,9 +50,10 @@ export function LimitsPills() {
     <div className="limits-bar">
       <span className="pill">Per order <strong>{usd(l.perOrder)}</strong></span>
       <span className="pill">This month <strong>{usd(l.spentThisMonth)}</strong> of {usd(l.monthly)}</span>
-      <span className="pill">Auto-buy <strong>{l.autoBuy ? 'ON' : 'OFF'}</strong></span>
-      <span className="pill">PayPal <strong>{l.paypalLinked ? 'linked' : 'not linked'}</strong></span>
-      {!l.paypalLinked && <Link href="/settings" className="small">Link PayPal to enable auto-buy</Link>}
+      {l.vaultEnabled && <span className="pill">Auto-buy <strong>{l.autoBuy ? 'ON' : 'OFF'}</strong></span>}
+      {l.vaultEnabled && <span className="pill">PayPal <strong>{l.paypalLinked ? 'linked' : 'not linked'}</strong></span>}
+      {l.vaultEnabled && !l.paypalLinked && <Link href="/settings" className="small">Link PayPal to enable auto-buy</Link>}
+      {!l.vaultEnabled && <span className="pill">Every order: <strong>one-tap approve</strong></span>}
     </div>
   );
 }

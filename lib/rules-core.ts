@@ -19,7 +19,7 @@ export function evaluateRules({ product, mandate, spentThisMonth, requestBudget 
   if (!product) return R('REJECT', 'NOT_FOUND', 'This product does not exist in our store.');
   if (product.stock <= 0) return R('REJECT', 'OUT_OF_STOCK', 'This product is out of stock.');
   if (!mandate || !mandate.paypalLinked)
-    return R('NEEDS_APPROVAL', 'PAYPAL_NOT_LINKED', 'PayPal is not linked yet, so this needs a one-time approval at checkout.');
+    return R('NEEDS_APPROVAL', 'ONE_TAP_APPROVAL', 'Every order needs your one-tap approval, then you pay through PayPal checkout.');
   if (product.price > mandate.perOrderLimit)
     return R('NEEDS_APPROVAL', 'OVER_PER_ORDER_LIMIT', `Price ${money(product.price)} is above your per-order limit of ${money(mandate.perOrderLimit)}.`);
   // Compare in cents so floating point never blocks or allows a purchase by mistake.

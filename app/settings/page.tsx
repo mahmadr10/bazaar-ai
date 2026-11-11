@@ -51,6 +51,7 @@ export default function SettingsPage() {
       <p className="muted">Your mandate: what the agent is allowed to do on its own. Code enforces these limits on every order, so the AI cannot go over them.</p>
       {msg && <div className={`alert alert-${msg.kind}`}>{msg.text}</div>}
 
+      {l.vaultEnabled && (
       <div className="card" style={{ marginBottom: 16 }}>
         <h2>1. Link PayPal once</h2>
         <p className="small muted">You log in to PayPal (sandbox) and approve saving it for future purchases (PayPal Vault). The agent then pays with it, inside your limits.</p>
@@ -61,28 +62,39 @@ export default function SettingsPage() {
             : <button className="btn btn-primary" onClick={link} disabled={busy}>Link PayPal</button>}
         </div>
       </div>
+      )}
 
       <form className="card" onSubmit={save}>
-        <h2>2. Safety limits</h2>
+        <h2>{l.vaultEnabled ? '2. ' : ''}Safety limits</h2>
         <div className="row" style={{ alignItems: 'flex-start' }}>
           <div className="field grow"><label htmlFor="po">Max per order (USD)</label><input id="po" className="input" type="number" min="1" step="0.01" value={perOrder} onChange={(e) => setPerOrder(e.target.value)} /></div>
           <div className="field grow"><label htmlFor="mo">Monthly cap (USD)</label><input id="mo" className="input" type="number" min="1" step="0.01" value={monthly} onChange={(e) => setMonthly(e.target.value)} /></div>
         </div>
-        <label className="switch" style={{ marginBottom: 14 }}>
-          <input type="checkbox" checked={autoBuy} onChange={(e) => setAutoBuy(e.target.checked)} />
-          Auto-buy without asking when inside my limits
-        </label>
+        {l.vaultEnabled && (
+          <label className="switch" style={{ marginBottom: 14 }}>
+            <input type="checkbox" checked={autoBuy} onChange={(e) => setAutoBuy(e.target.checked)} />
+            Auto-buy without asking when inside my limits
+          </label>
+        )}
         <p className="small muted">Spent this month: {usd(l.spentThisMonth)} of {usd(l.monthly)}.</p>
         <button className="btn btn-primary" disabled={busy}>Save limits</button>
       </form>
 
       <div className="card" style={{ marginTop: 16 }}>
         <h2>How the agent decides</h2>
-        <ul className="small" style={{ margin: 0, paddingLeft: 18, color: 'var(--ink-2)' }}>
-          <li>Auto-buy only if: price is within the budget you said, that budget is within your per-order limit, the monthly cap is not crossed, auto-buy is on and PayPal is linked.</li>
-          <li>Anything else: the agent shows the best product with an Approve button.</li>
-          <li>Every auto-purchase has a {me?.undoMinutes ?? 10}-minute undo with a full PayPal refund. Sellers are paid after the undo window.</li>
-        </ul>
+        {l.vaultEnabled ? (
+          <ul className="small" style={{ margin: 0, paddingLeft: 18, color: 'var(--ink-2)' }}>
+            <li>Auto-buy only if: price is within the budget you said, that budget is within your per-order limit, the monthly cap is not crossed, auto-buy is on and PayPal is linked.</li>
+            <li>Anything else: the agent shows the best product with an Approve button.</li>
+            <li>Every auto-purchase has a {me?.undoMinutes ?? 10}-minute undo with a full PayPal refund. Sellers are paid after the undo window.</li>
+          </ul>
+        ) : (
+          <ul className="small" style={{ margin: 0, paddingLeft: 18, color: 'var(--ink-2)' }}>
+            <li>The agent finds and ranks products, then shows the best pick with an Approve button.</li>
+            <li>You pay through PayPal checkout. The server always checks the price from the database and your limits above.</li>
+            <li>Every paid order has a {me?.undoMinutes ?? 10}-minute undo with a full PayPal refund. Sellers are paid after the undo window.</li>
+          </ul>
+        )}
       </div>
     </div>
   );

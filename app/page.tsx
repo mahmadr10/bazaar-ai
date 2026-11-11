@@ -71,11 +71,11 @@ export default function ChatPage() {
         {msgs.length === 0 && (
           <div className="hero">
             <h1>Tell me what you need and your budget.</h1>
-            <p>I search the store, read the reviews, pick the best value and pay with your saved PayPal, but only inside the limits you set. English, Urdu or Roman Urdu.</p>
+            <p>I search the store, read the reviews, pick the best value. You approve with one tap and pay through PayPal, and your spending limits are enforced by code. English, Urdu or Roman Urdu.</p>
             <div className="how">
               <div className="card"><strong>1. You ask</strong>&quot;Under $10 mein best mascara le do&quot;</div>
               <div className="card"><strong>2. Agent picks</strong>Compares price, rating and reviews from our catalog.</div>
-              <div className="card"><strong>3. Code checks limits</strong>A rules engine, not the AI, decides auto-buy or ask first.</div>
+              <div className="card"><strong>3. Code checks limits</strong>A rules engine, not the AI, checks the price and your limits.</div>
               <div className="card"><strong>4. PayPal pays</strong>Receipt, 10-minute undo, seller paid after the window.</div>
             </div>
           </div>

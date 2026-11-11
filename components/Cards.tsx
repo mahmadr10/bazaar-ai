@@ -125,8 +125,9 @@ export function LimitsCard({ limits: l }: { limits: Limits }) {
       <div className="receipt-line"><span className="muted">Per-order limit</span><strong>{usd(l.perOrder)}</strong></div>
       <div className="receipt-line"><span className="muted">Monthly cap</span><strong>{usd(l.monthly)}</strong></div>
       <div className="receipt-line"><span className="muted">Spent this month</span><strong>{usd(l.spentThisMonth)}</strong></div>
-      <div className="receipt-line"><span className="muted">Auto-buy</span><strong>{l.autoBuy ? 'ON' : 'OFF'}</strong></div>
-      <div className="receipt-line"><span className="muted">PayPal</span><strong>{l.paypalLinked ? 'Linked' : 'Not linked'}</strong></div>
+      {l.vaultEnabled && <div className="receipt-line"><span className="muted">Auto-buy</span><strong>{l.autoBuy ? 'ON' : 'OFF'}</strong></div>}
+      {l.vaultEnabled && <div className="receipt-line"><span className="muted">PayPal</span><strong>{l.paypalLinked ? 'Linked' : 'Not linked'}</strong></div>}
+      {!l.vaultEnabled && <div className="receipt-line"><span className="muted">Every order</span><strong>One-tap approve</strong></div>}
     </div>
   );
 }
